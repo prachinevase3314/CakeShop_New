@@ -1,0 +1,269 @@
+// About Page Styling
+.about-page {
+  width: 100%;
+  min-height: 100vh;
+}
+
+// Header Section
+.about-header {
+  background: linear-gradient(135deg, #f5f3ff 0%, #fef5f5 100%);
+  padding: 3rem 2rem;
+  text-align: center;
+  border-bottom: 3px solid #ec4899;
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+    letter-spacing: 0.5px;
+
+    @media (max-width: 768px) {
+      font-size: 2rem;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+// Breadcrumb Navigation
+.breadcrumb {
+  padding: 1rem 2rem;
+  background: #f9fafb;
+  font-size: 0.95rem;
+  color: #6b7280;
+
+  a {
+    color: #ec4899;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+
+    &:hover {
+      color: #db2777;
+      text-decoration: underline;
+    }
+  }
+
+  span {
+    margin: 0 0.5rem;
+    color: #9ca3af;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+// About Content Section
+.about-content-section {
+  padding: 3rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto 3rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-left: 2rem;
+  margin-right: 2rem;
+
+  @media (max-width: 768px) {
+    padding: 2rem 1.5rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1.5rem 1rem;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+  }
+}
+
+.about-content {
+  p {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: #ec4899;
+    font-style: italic;
+    margin: 0 0 1.5rem 0;
+    font-weight: 500;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    strong {
+      font-weight: 700;
+      color: #ec4899;
+    }
+
+    @media (max-width: 768px) {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+  }
+}
+
+// Categories Section
+.categories-section {
+  padding: 4rem 2rem;
+  background: #f9fafb;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: 3rem 1.5rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 2rem 1rem;
+  }
+}
+
+.section-title {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 3rem;
+  letter-spacing: 0.3px;
+
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+.categories-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.category-card {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: 250px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(236, 72, 153, 0.2);
+
+    .category-image {
+      transform: scale(1.08);
+    }
+
+    .category-name {
+      transform: translateY(-8px);
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.9) 100%
+      );
+    }
+  }
+
+  @media (max-width: 768px) {
+    height: 200px;
+  }
+
+  @media (max-width: 480px) {
+    height: 180px;
+  }
+}
+
+.category-image {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.3s ease;
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+  }
+}
+
+.category-name {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+  color: white;
+  padding: 1.5rem 1rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  z-index: 2;
+
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+    padding: 1rem 0.875rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1rem;
+    padding: 0.875rem 0.75rem;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .about-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .about-content-section {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-header {
+    padding: 2rem 1rem;
+  }
+
+  .about-content-section {
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 1rem;
+  }
+}
