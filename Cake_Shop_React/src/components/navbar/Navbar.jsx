@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { FaRegCircleUser } from "react-icons/fa6";
 import { FaCartPlus } from "react-icons/fa";
 import { SHOP_NAME } from "../../utils/constants";
-import { logoutAction } from "../../utils/commonUtils";
+import { isUserAdmin, logoutAction } from "../../utils/commonUtils";
 import "./index.scss";
 
 const Navbar = () => {
@@ -12,7 +12,7 @@ const Navbar = () => {
 
   // Helper for active styling
   const navClass = ({ isActive }) => `nav-link ${isActive ? "active" : ""}`;
-  const isAdmin = sessionStorage.getItem("isAdmin") === "true";
+  const isAdmin = isUserAdmin();
 
   const handleLogout = () => {
     logoutAction();
