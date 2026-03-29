@@ -1,35 +1,33 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Cart.scss";
+import { getUserData } from "../../utils/commonUtils";
+import { api } from "../../api/axios.api";
+
+const CART_KEY = "cartItems";
 
 const Cart = () => {
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Chocolate Cake",
-      price: 25.0,
-      quantity: 2,
-      image:
-        "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&h=300&fit=crop",
-    },
-    {
-      id: 3,
-      name: "Chocolate Chip Cookies",
-      price: 12.0,
-      quantity: 3,
-      image:
-        "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=300&h=300&fit=crop",
-    },
-    {
-      id: 5,
-      name: "Croissants",
-      price: 8.0,
-      quantity: 1,
-      image:
-        "https://images.unsplash.com/photo-1623334044303-241021148842?w=300&h=300&fit=crop",
-    },
-  ]);
+
+  const getCartFromLocalStorage = () => {
+    try {
+      const stored = localStorage.getItem(CART_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error("Failed to parse cart from localStorage", error);
+      return [];
+    }
+  };
+
+  const saveCartToLocalStorage = (items) => {
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
+  };
+
+  const [cartItems, setCartItems] = useState(() => getCartFromLocalStorage());
+
+  React.useEffect(() => {
+    saveCartToLocalStorage(cartItems);
+  }, [cartItems]);
 
   const handleQuantityChange = (id, newQuantity) => {
     if (newQuantity < 1) {
@@ -38,13 +36,13 @@ const Cart = () => {
     }
     setCartItems((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, quantity: newQuantity } : item,
+        item._id === id ? { ...item, quantity: newQuantity } : item,
       ),
     );
   };
 
   const handleRemoveItem = (id) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
+    setCartItems((prev) => prev.filter((item) => item._id !== id));
   };
 
   const calculateSubtotal = (price, quantity) => {
@@ -57,9 +55,36 @@ const Cart = () => {
       .toFixed(2);
   };
 
-  const handleCheckout = () => {
-    console.log("Proceeding to checkout with items:", cartItems);
-    // Add checkout logic here
+  const handleOrderNowClick = () => {
+    const newCartItems = cartItems.map((item) => ({
+      productId: item._id,
+      quantity: item.quantity,
+    }));
+
+    const payload = {
+      customerId: getUserData()._id,
+      products: newCartItems,
+      totalAmount: parseFloat(calculateTotal()),
+    };
+
+    api
+      .post("/api/orders", payload, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem("authToken")}`,
+        },
+      })
+      .then((response) => {
+        console.log("Order placed successfully:", response.data);
+        alert("Your order has been placed successfully!");
+        setCartItems([]);
+      })
+      .catch((error) => {
+        console.error("Failed to place order:", error);
+        alert("There was an error placing your order. Please try again.");
+      });
+
+    console.log("Order placed:", payload);
   };
 
   return (
@@ -89,7 +114,7 @@ const Cart = () => {
               </div>
 
               {cartItems.map((item) => (
-                <div key={item.id} className="cart-item">
+                <div key={item._id} className="cart-item">
                   <div className="col-product">
                     <img
                       src={item.image}
@@ -110,7 +135,7 @@ const Cart = () => {
                       <button
                         className="qty-btn"
                         onClick={() =>
-                          handleQuantityChange(item.id, item.quantity - 1)
+                          handleQuantityChange(item._id, item.quantity - 1)
                         }
                       >
                         −
@@ -121,7 +146,7 @@ const Cart = () => {
                         value={item.quantity}
                         onChange={(e) =>
                           handleQuantityChange(
-                            item.id,
+                            item._id,
                             parseInt(e.target.value) || 1,
                           )
                         }
@@ -130,7 +155,7 @@ const Cart = () => {
                       <button
                         className="qty-btn"
                         onClick={() =>
-                          handleQuantityChange(item.id, item.quantity + 1)
+                          handleQuantityChange(item._id, item.quantity + 1)
                         }
                       >
                         +
@@ -139,13 +164,13 @@ const Cart = () => {
                   </div>
 
                   <div className="col-subtotal">
-                    <span>${calculateSubtotal(item.price, item.quantity)}</span>
+                    <span>₹{calculateSubtotal(item.price, item.quantity)}</span>
                   </div>
 
                   <div className="col-action">
                     <button
                       className="remove-btn"
-                      onClick={() => handleRemoveItem(item.id)}
+                      onClick={() => handleRemoveItem(item._id)}
                     >
                       Remove
                     </button>
@@ -180,8 +205,8 @@ const Cart = () => {
                   <span className="total-price">₹{calculateTotal()}</span>
                 </div>
 
-                <button className="checkout-btn" onClick={handleCheckout}>
-                  Proceed to Checkout
+                <button className="checkout-btn" onClick={handleOrderNowClick}>
+                  Order Now
                 </button>
 
                 <button

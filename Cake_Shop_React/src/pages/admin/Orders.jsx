@@ -2,11 +2,21 @@ import React, { useState } from "react";
 import Modal from "../../components/modal/Modal";
 import { orderDetails } from "../../utils/constants";
 import "./AdminPages.scss";
+import { fetchOrders } from "../../api/commonAPIs";
 
 const Orders = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [editedOrder, setEditedOrder] = useState(null);
+  const [orders, setOrders] = useState([]);
+
+  React.useEffect(() => {
+    const fetchOrdersData = async () => {
+      const ordersResObj = await fetchOrders();
+      setOrders(ordersResObj.data);
+    };
+    fetchOrdersData();
+  }, []);
 
   const handleEditClick = (order) => {
     setSelectedOrder(order);
@@ -64,13 +74,13 @@ const Orders = () => {
           </tr>
         </thead>
         <tbody>
-          {orderDetails.map((order) => (
+          {orders.map((order) => (
             <tr key={order.orderId}>
               <td>{order.orderId}</td>
               <td>{order.customerName}</td>
               <td>₹{order.amount}</td>
               <td>{order.paymentMethod}</td>
-              <td>{order.date}</td>
+              <td>{order.createdAt?.split("T")[0]}</td>
               <td>
                 <button
                   className="edit-btn"
@@ -124,8 +134,8 @@ const Orders = () => {
             <label>Email</label>
             <input
               type="email"
-              name="email"
-              value={editedOrder?.email || ""}
+              name="customerEmail"
+              value={editedOrder?.customerEmail || ""}
               onChange={handleInputChange}
               className="form-input"
             />
@@ -135,8 +145,8 @@ const Orders = () => {
             <label>Phone</label>
             <input
               type="text"
-              name="phone"
-              value={editedOrder?.phone || ""}
+              name="customerPhone"
+              value={editedOrder?.customerPhone || ""}
               onChange={handleInputChange}
               className="form-input"
             />
@@ -146,8 +156,8 @@ const Orders = () => {
             <label>Amount</label>
             <input
               type="number"
-              name="amount"
-              value={editedOrder?.amount || ""}
+              name="totalAmount"
+              value={editedOrder?.totalAmount || ""}
               onChange={handleInputChange}
               className="form-input"
             />
@@ -168,8 +178,8 @@ const Orders = () => {
             <label>Date</label>
             <input
               type="date"
-              name="date"
-              value={editedOrder?.date || ""}
+              name="createdAt"
+              value={editedOrder?.createdAt?.split("T")[0] || ""}
               onChange={handleInputChange}
               className="form-input"
               disabled

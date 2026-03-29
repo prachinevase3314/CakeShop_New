@@ -5,7 +5,6 @@ const Category = require("../models/category.model");
 const categorySchema = Joi.object({
   name: Joi.string().min(2).max(50).required(),
   description: Joi.string().max(255).required(),
-  productCount: Joi.number().integer().min(0).required(),
 });
 
 exports.createCategory = async (req, res, next) => {
@@ -18,7 +17,7 @@ exports.createCategory = async (req, res, next) => {
         error: error.details.map((detail) => detail.message),
       });
 
-    const { name, description, productCount } = value;
+    const { name, description } = value;
 
     const existingCategory = await Category.findOne({
       slug: slugify(name, { lower: true }),
@@ -30,7 +29,6 @@ exports.createCategory = async (req, res, next) => {
       name,
       slug: slugify(name, { lower: true }),
       description,
-      productCount,
     });
 
     const saved = await category.save();
@@ -53,7 +51,7 @@ exports.updateCategory = async (req, res, next) => {
         error: error.details.map((detail) => detail.message),
       });
 
-    const { name, description, productCount } = value;
+    const { name, description } = value;
 
     const category = await Category.findByIdAndUpdate(
       req.params.id,
@@ -61,9 +59,8 @@ exports.updateCategory = async (req, res, next) => {
         name,
         slug: slugify(name, { lower: true }),
         description,
-        productCount,
       },
-      { new: true },
+      { returnDocument: true },
     );
 
     if (!category) return res.status(404).json({ error: "Category not found" });

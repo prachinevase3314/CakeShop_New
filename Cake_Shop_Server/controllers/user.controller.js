@@ -4,7 +4,8 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
 
 const registerSchema = Joi.object({
-  name: Joi.string().min(2).max(50).required(),
+  firstName: Joi.string().min(2).max(50).required(),
+  lastName: Joi.string().min(2).max(50).required(),
   email: Joi.string().email().required(),
   password: Joi.string().min(6).required(),
   confirmPassword: Joi.any()
@@ -34,7 +35,7 @@ exports.registerUser = async (req, res, next) => {
         error: error.details.map((detail) => detail.message),
       });
 
-    const { name, email, password, phone, address } = value;
+    const { firstName, lastName, email, password, phone, address } = value;
 
     const existingUser = await User.findOne({ email });
     if (existingUser)
@@ -43,7 +44,8 @@ exports.registerUser = async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new User({
-      name,
+      firstName,
+      lastName,
       email,
       password: hashedPassword,
       phone,
@@ -51,20 +53,26 @@ exports.registerUser = async (req, res, next) => {
     });
 
     const saved = await user.save();
-    const token = jwt.sign({ id: saved._id, email: saved.email }, jwtSecret, {
-      expiresIn: "7d",
-    });
+    const authToken = jwt.sign(
+      { id: saved._id, email: saved.email },
+      jwtSecret,
+      {
+        expiresIn: "7d",
+      },
+    );
 
     res.status(201).json({
       message: "User registered successfully",
       user: {
         id: saved._id,
-        name: saved.name,
+        firstName: saved.firstName,
+        lastName: saved.lastName,
         email: saved.email,
         phone: saved.phone,
         address: saved.address,
+        role: saved.role,
       },
-      token,
+      authToken,
     });
   } catch (err) {
     next(err);
@@ -84,15 +92,38 @@ exports.loginUser = async (req, res, next) => {
     if (!isMatch)
       return res.status(401).json({ error: "Invalid email or password" });
 
-    const token = jwt.sign({ id: user._id, email: user.email }, jwtSecret, {
+    const authToken = jwt.sign({ id: user._id, email: user.email }, jwtSecret, {
       expiresIn: "7d",
     });
 
     res.status(200).json({
       message: "Login successful",
-      user: { id: user._id, name: user.name, email: user.email },
-      token,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        role: user.role,
+      },
+      authToken,
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.updateUser = async (req, res, next) => {
+  try {
+    const { user_Id } = req.params;
+    const user = await User.findById(user_Id);
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+    const updatedUser = await User.findByIdAndUpdate(user_Id, req.body, {
+      returnDocument: true,
+    }).select("-password");
+    res.json({ user: updatedUser });
   } catch (err) {
     next(err);
   }
@@ -104,6 +135,15 @@ exports.getProfile = async (req, res, next) => {
     if (!user) return res.status(404).json({ error: "User not found" });
 
     res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getAllUsers = async (req, res, next) => {
+  try {
+    const users = await User.find().select("-password");
+    res.json({ users });
   } catch (err) {
     next(err);
   }

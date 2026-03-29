@@ -1,6 +1,7 @@
 const Joi = require("joi");
-const slugify = require("slugify");
 const Order = require("../models/order.model");
+const User = require("../models/user.model");
+const Product = require("../models/product.model");
 
 const orderSchema = Joi.object({
   customerId: Joi.string().hex().length(24).required(),
@@ -53,7 +54,7 @@ exports.getOrders = async (req, res, next) => {
     const ordersWithDetails = await Promise.all(
       orders.map(async (order) => {
         const customer = await User.findById(order.customerId).select(
-          "name email",
+          "firstName lastName email phone address",
         );
         const products = await Promise.all(
           order.products.map(async (item) => {
@@ -68,14 +69,17 @@ exports.getOrders = async (req, res, next) => {
             };
           }),
         );
+
         return {
           orderId: order._id,
           customerId: order.customerId,
-          customerName: customer.name,
+          customerName: `${customer.firstName} ${customer.lastName}`,
           customerEmail: customer.email,
+          customerPhone: customer.phone,
           customerAddress: customer.address,
           products,
           totalAmount: order.totalAmount,
+          paymentMethod: order.paymentMethod,
           createdAt: order.createdAt,
           updatedAt: order.updatedAt,
         };

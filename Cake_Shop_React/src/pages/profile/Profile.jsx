@@ -8,18 +8,22 @@ import {
   FaSave,
   FaTimes,
 } from "react-icons/fa";
+import { api } from "../../api/axios.api";
 import "./Profile.scss";
+import { getUserData, setUserData } from "../../utils/commonUtils";
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const userData = getUserData();
 
   const [profileData, setProfileData] = useState({
-    firstName: "Prachi",
-    lastName: "Nevase",
-    email: "prachi.nevase@example.com",
-    phone: "+91 9876543210",
-    address: "A/P. Naigaon, Satara, 412801",
+    id: userData?.id,
+    firstName: userData?.firstName,
+    lastName: userData?.lastName,
+    email: userData?.email,
+    phone: userData?.phone,
+    address: userData?.address,
   });
 
   const [editData, setEditData] = useState(profileData);
@@ -38,10 +42,23 @@ const Profile = () => {
   };
 
   const handleSave = () => {
-    setProfileData(editData);
-    setIsEditing(false);
-    setSuccessMessage("Profile updated successfully!");
-    setTimeout(() => setSuccessMessage(""), 5000);
+    api
+      .patch(`/api/users/${profileData.id}`, editData, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("authToken")}`,
+        },
+      })
+      .then((response) => {
+        console.log("API Response:", response.data);
+        setUserData(response.data.user);
+        setProfileData(editData);
+        setIsEditing(false);
+        setSuccessMessage("Profile updated successfully!");
+        setTimeout(() => setSuccessMessage(""), 5000);
+      })
+      .catch((error) => {
+        console.error("API Error:", error);
+      });
   };
 
   const handleCancel = () => {

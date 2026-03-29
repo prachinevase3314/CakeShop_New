@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { api } from "../../api/axios.api";
 import "./Register.scss";
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -26,10 +28,16 @@ const Register = () => {
   const validate = () => {
     let newErrors = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
-    } else if (formData.name.trim().length < 3) {
-      newErrors.name = "Name must be at least 3 characters";
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "First name is required";
+    } else if (formData.firstName.trim().length < 2) {
+      newErrors.firstName = "First name must be at least 2 characters";
+    }
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Last name is required";
+    } else if (formData.lastName.trim().length < 2) {
+      newErrors.lastName = "Last name must be at least 2 characters";
     }
 
     if (!formData.email) {
@@ -80,12 +88,18 @@ const Register = () => {
     const newErrors = validate();
 
     if (Object.keys(newErrors).length === 0) {
-      // Create a mock token
-      const mockToken = "authToken_" + Date.now();
-      sessionStorage.setItem("authToken", mockToken);
-
-      console.log("Registration successful", formData);
-      navigate("/");
+      api
+        .post("/api/users/register", formData)
+        .then((response) => {
+          const { user, authToken } = response.data;
+          setUserData(user);
+          sessionStorage.setItem("authToken", authToken);
+          navigate("/");
+          console.log("Registration successful", response.data);
+        })
+        .catch((error) => {
+          console.error("API Error:", error);
+        });
     } else {
       setErrors(newErrors);
     }
@@ -104,17 +118,34 @@ const Register = () => {
 
         {/* Form */}
         <form onSubmit={handleRegister} className="register-form">
-          {/* Name Input */}
+          {/* first name Input */}
           <div className="form-group">
             <input
               type="text"
-              name="name"
-              placeholder="Full Name"
-              value={formData.name}
+              name="firstName"
+              placeholder="First Name"
+              value={formData.firstName}
               onChange={handleChange}
-              className={`form-input ${errors.name ? "error" : ""}`}
+              className={`form-input ${errors.firstName ? "error" : ""}`}
             />
-            {errors.name && <span className="error-text">{errors.name}</span>}
+            {errors.firstName && (
+              <span className="error-text">{errors.firstName}</span>
+            )}
+          </div>
+
+          {/* last name Input */}
+          <div className="form-group">
+            <input
+              type="text"
+              name="lastName"
+              placeholder="Last Name"
+              value={formData.lastName}
+              onChange={handleChange}
+              className={`form-input ${errors.lastName ? "error" : ""}`}
+            />
+            {errors.lastName && (
+              <span className="error-text">{errors.lastName}</span>
+            )}
           </div>
 
           {/* Email Input */}

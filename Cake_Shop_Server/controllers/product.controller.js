@@ -5,6 +5,7 @@ const Product = require("../models/product.model");
 const productSchema = Joi.object({
   name: Joi.string().min(2).max(100).required(),
   description: Joi.string().max(500).required(),
+  productCategory: Joi.string().required(),
   price: Joi.number().positive().precision(2).required(),
   stock: Joi.number().integer().min(0).required(),
 });
@@ -14,12 +15,13 @@ exports.createProduct = async (req, res, next) => {
     const { error, value } = productSchema.validate(req.body, {
       abortEarly: false,
     });
+
     if (error)
       return res.status(400).json({
         error: error.details.map((detail) => detail.message),
       });
 
-    const { name, description, price, stock } = value;
+    const { name, description, price, stock, productCategory } = value;
 
     const existingProduct = await Product.findOne({
       slug: slugify(name, { lower: true }),
@@ -31,6 +33,7 @@ exports.createProduct = async (req, res, next) => {
       name,
       slug: slugify(name, { lower: true }),
       description,
+      productCategory,
       price,
       stock,
     });
@@ -55,18 +58,19 @@ exports.updateProduct = async (req, res, next) => {
         error: error.details.map((detail) => detail.message),
       });
 
-    const { name, description, price, stock } = value;
+    const { name, description, price, stock, productCategory } = value;
 
     const product = await Product.findByIdAndUpdate(
       req.params.id,
       {
         name,
+        productCategory,
         slug: slugify(name, { lower: true }),
         description,
         price,
         stock,
       },
-      { new: true },
+      { returnDocument: true },
     );
 
     if (!product) return res.status(404).json({ error: "Product not found" });

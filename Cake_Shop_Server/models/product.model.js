@@ -4,6 +4,11 @@ const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, trim: true, unique: true },
+    productCategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
+    },
     description: { type: String, required: true, trim: true },
     price: { type: Number, required: true, min: 0 },
     stock: { type: Number, required: true, min: 0 },

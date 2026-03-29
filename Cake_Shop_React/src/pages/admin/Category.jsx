@@ -1,53 +1,39 @@
 import React, { useState } from "react";
 import Modal from "../../components/modal/Modal";
 import "./AdminPages.scss";
+import { api } from "../../api/axios.api";
+import { fetchCategories } from "../../api/commonAPIs";
+
+const initialFormData = {
+  name: "",
+  description: "",
+};
 
 const Category = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [formData, setFormData] = useState({
-    categoryName: "",
-    description: "",
-    productsCount: "",
-  });
+  const [formData, setFormData] = useState(initialFormData);
+  const [categories, setCategories] = useState([]);
 
-  const categories = [
-    {
-      id: 1,
-      categoryName: "Cakes",
-      description: "Delicious homemade cakes",
-      productsCount: "24",
-    },
-    {
-      id: 2,
-      categoryName: "Cookies",
-      description: "Fresh baked cookies",
-      productsCount: "18",
-    },
-    {
-      id: 3,
-      categoryName: "Pastries",
-      description: "Artisan pastries",
-      productsCount: "16",
-    },
-  ];
+  React.useEffect(() => {
+    const fetchCategoryData = async () => {
+      const categoryResObj = await fetchCategories();
+      setCategories(categoryResObj.data);
+    };
+    fetchCategoryData();
+  }, []);
 
   const handleAddClick = () => {
     setSelectedCategory(null);
-    setFormData({
-      categoryName: "",
-      description: "",
-      productsCount: "",
-    });
+    setFormData(initialFormData);
     setIsModalOpen(true);
   };
 
   const handleEditClick = (category) => {
     setSelectedCategory(category);
     setFormData({
-      categoryName: category.categoryName,
+      name: category.name,
       description: category.description,
-      productsCount: category.productsCount,
     });
     setIsModalOpen(true);
   };
@@ -62,31 +48,67 @@ const Category = () => {
 
   const handleSaveCategory = () => {
     if (selectedCategory) {
-      console.log("Category updated:", {
-        id: selectedCategory.id,
-        ...formData,
-      });
+      api
+        .patch(`/api/categories/${selectedCategory._id}`, formData, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("authToken")}`,
+          },
+        })
+        .then((response) => {
+          console.log("Category updated:", response.data);
+        })
+        .catch((error) => {
+          console.error("Error updating category:", error);
+        });
     } else {
-      console.log("Category added:", formData);
+      api
+        .post("/api/categories", formData, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("authToken")}`,
+          },
+        })
+        .then((response) => {
+          console.log("Category added:", response.data);
+        })
+        .catch((error) => {
+          console.error("Error adding category:", error);
+        });
     }
     setIsModalOpen(false);
     setSelectedCategory(null);
-    setFormData({
-      categoryName: "",
-      description: "",
-      productsCount: "",
-    });
+    setFormData(initialFormData);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedCategory(null);
-    setFormData({
-      categoryName: "",
-      description: "",
-      productsCount: "",
-    });
+    setFormData(initialFormData);
   };
+
+  const handleDeleteClick = (category) => {
+    if (window.confirm("Are you sure you want to delete this category?")) {
+      api
+        .delete(`/api/categories/${category._id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("authToken")}`,
+          },
+        })
+        .then((response) => {
+          console.log("Category deleted:", response.data);
+          // Remove the deleted category from the list
+          setCategories((prev) =>
+            prev.filter((cat) => cat._id !== category._id),
+          );
+        })
+        .catch((error) => {
+          console.error("Error deleting category:", error);
+        });
+    }
+  };
+
   return (
     <div className="admin-page">
       <h1>Category Management</h1>
@@ -98,20 +120,18 @@ const Category = () => {
       <table className="admin-table">
         <thead>
           <tr>
-            <th>ID</th>
+            {/* <th>ID</th> */}
             <th>Category Name</th>
             <th>Description</th>
-            <th>Products Count</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {categories.map((category) => (
-            <tr key={category.id}>
-              <td>{category.id}</td>
-              <td>{category.categoryName}</td>
+            <tr key={category._id}>
+              {/* <td>{category._id}</td> */}
+              <td>{category.name}</td>
               <td>{category.description}</td>
-              <td>{category.productsCount}</td>
               <td>
                 <button
                   className="edit-btn"
@@ -119,7 +139,12 @@ const Category = () => {
                 >
                   Edit
                 </button>
-                <button className="delete-btn">Delete</button>
+                <button
+                  className="delete-btn"
+                  onClick={() => handleDeleteClick(category)}
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
@@ -138,8 +163,8 @@ const Category = () => {
             <label>Category Name</label>
             <input
               type="text"
-              name="categoryName"
-              value={formData.categoryName}
+              name="name"
+              value={formData.name}
               onChange={handleInputChange}
               className="form-input"
               placeholder="Enter category name"
@@ -155,18 +180,6 @@ const Category = () => {
               className="form-input"
               placeholder="Enter category description"
               rows="3"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Products Count</label>
-            <input
-              type="number"
-              name="productsCount"
-              value={formData.productsCount}
-              onChange={handleInputChange}
-              className="form-input"
-              placeholder="Enter number of products"
             />
           </div>
         </form>

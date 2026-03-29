@@ -18,6 +18,7 @@ const orderSchema = new mongoose.Schema(
       },
     ],
     totalAmount: { type: Number, required: true, min: 0 },
+    paymentMethod: { type: String, enum: ["COD", "Online"], default: "Online" },
   },
   { timestamps: true },
 );

@@ -1,50 +1,52 @@
 import React, { useState } from "react";
 import Modal from "../../components/modal/Modal";
 import "./AdminPages.scss";
+import { api } from "../../api/axios.api";
+import { fetchCategories, fetchProducts } from "../../api/commonAPIs";
+
+const initialFormData = {
+  name: "",
+  productCategory: "",
+  description: "",
+  price: "",
+  stock: "",
+};
 
 const Products = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [formData, setFormData] = useState({
-    productName: "",
-    category: "",
-    price: "",
-    stock: "",
-  });
+  const [formData, setFormData] = useState(initialFormData);
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
 
-  const products = [
-    {
-      id: 1,
-      productName: "Chocolate Cake",
-      category: "Cakes",
-      price: "25.00",
-      stock: "45",
-    },
-    {
-      id: 2,
-      productName: "Vanilla Cupcakes",
-      category: "Cupcakes",
-      price: "15.00",
-      stock: "67",
-    },
-  ];
+  React.useEffect(() => {
+    const fetchCategoryData = async () => {
+      const categoryResObj = await fetchCategories();
+      setCategories(categoryResObj.data);
+    };
+    fetchCategoryData();
+  }, []);
+
+  React.useEffect(() => {
+    const fetchProductsData = async () => {
+      const productResObj = await fetchProducts();
+      setProducts(productResObj.data);
+    };
+    fetchProductsData();
+  }, []);
 
   const handleAddClick = () => {
     setSelectedProduct(null);
-    setFormData({
-      productName: "",
-      category: "",
-      price: "",
-      stock: "",
-    });
+    setFormData(initialFormData);
     setIsModalOpen(true);
   };
 
   const handleEditClick = (product) => {
     setSelectedProduct(product);
     setFormData({
-      productName: product.productName,
-      category: product.category,
+      name: product.name,
+      description: product.description,
+      productCategory: product.productCategory,
       price: product.price,
       stock: product.stock,
     });
@@ -59,32 +61,76 @@ const Products = () => {
     }));
   };
 
-  const handleSaveProduct = () => {
-    if (selectedProduct) {
-      console.log("Product updated:", { id: selectedProduct.id, ...formData });
-    } else {
-      console.log("Product added:", formData);
+  const handleSaveProduct = async () => {
+    try {
+      if (selectedProduct) {
+        // Update existing product
+        const response = await api.put(
+          `/api/products/${selectedProduct._id}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${sessionStorage.getItem("authToken")}`,
+            },
+          },
+        );
+        console.log("Product updated successfully:", response.data);
+        // Update the product in the list
+        setProducts((prev) =>
+          prev.map((prod) =>
+            prod._id === selectedProduct._id ? { ...prod, ...formData } : prod,
+          ),
+        );
+      } else {
+        // Add new product
+        const response = await api.post("/api/products", formData, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("authToken")}`,
+          },
+        });
+        console.log("Product added successfully:", response.data);
+        // Add the new product to the list
+        setProducts((prev) => [...prev, response.data]);
+      }
+    } catch (error) {
+      console.error("Error saving product:", error);
     }
+
     setIsModalOpen(false);
     setSelectedProduct(null);
-    setFormData({
-      productName: "",
-      category: "",
-      price: "",
-      stock: "",
-    });
+    setFormData(initialFormData);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedProduct(null);
-    setFormData({
-      productName: "",
-      category: "",
-      price: "",
-      stock: "",
-    });
+    setFormData(initialFormData);
   };
+
+  const handleDeleteClick = (product) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      api
+        .delete(`/api/products/${product._id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("authToken")}`,
+          },
+        })
+        .then((response) => {
+          console.log("Product deleted:", response.data);
+          // Remove the deleted product from the list
+          setProducts((prev) =>
+            prev.filter((prod) => prod._id !== product._id),
+          );
+        })
+        .catch((error) => {
+          console.error("Error deleting product:", error);
+        });
+    }
+  };
+
   return (
     <div className="admin-page">
       <h1>Products Management</h1>
@@ -96,9 +142,9 @@ const Products = () => {
       <table className="admin-table">
         <thead>
           <tr>
-            <th>ID</th>
+            {/* <th>ID</th> */}
             <th>Product Name</th>
-            <th>Category</th>
+            <th>Product Category</th>
             <th>Price</th>
             <th>Stock</th>
             <th>Actions</th>
@@ -106,10 +152,10 @@ const Products = () => {
         </thead>
         <tbody>
           {products.map((product) => (
-            <tr key={product.id}>
-              <td>{product.id}</td>
-              <td>{product.productName}</td>
-              <td>{product.category}</td>
+            <tr key={product._id}>
+              {/* <td>{product._id}</td> */}
+              <td>{product.name}</td>
+              <td>{product.productCategory}</td>
               <td>₹{product.price}</td>
               <td>{product.stock}</td>
               <td>
@@ -119,7 +165,12 @@ const Products = () => {
                 >
                   Edit
                 </button>
-                <button className="delete-btn">Delete</button>
+                <button
+                  className="delete-btn"
+                  onClick={() => handleDeleteClick(product)}
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
@@ -138,24 +189,42 @@ const Products = () => {
             <label>Product Name</label>
             <input
               type="text"
-              name="productName"
-              value={formData.productName}
+              name="name"
+              value={formData.name}
               onChange={handleInputChange}
               className="form-input"
               placeholder="Enter product name"
             />
           </div>
 
+          {/* Description Input */}
           <div className="form-group">
-            <label>Category</label>
-            <input
-              type="text"
-              name="category"
-              value={formData.category}
+            <label>Product Description</label>
+            <textarea
+              name="description"
+              placeholder="Product Description"
+              value={formData.description}
               onChange={handleInputChange}
               className="form-input"
-              placeholder="Enter category"
+              rows="3"
             />
+          </div>
+
+          <div className="form-group">
+            <label>Category</label>
+            <select
+              name="productCategory"
+              value={formData.productCategory}
+              onChange={handleInputChange}
+              className="form-input"
+            >
+              <option value="">Select Category</option>
+              {categories?.map((category) => (
+                <option key={category._id} value={category._id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group">

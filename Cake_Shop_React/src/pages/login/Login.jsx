@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { SHOP_NAME } from "../../utils/constants";
 import "./Login.scss";
+import { api } from "../../api/axios.api";
+import { setUserData } from "../../utils/commonUtils";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -42,17 +44,18 @@ const Login = () => {
     const newErrors = validate();
 
     if (Object.keys(newErrors).length === 0) {
-      // Here you would typically make an API call
-      // For now, we'll create a mock token
-      const mockToken = "authToken_" + Date.now();
-
-      // Store the auth token in sessionStorage
-      sessionStorage.setItem("authToken", mockToken);
-
-      console.log("Login successful", { email, password });
-
-      // Redirect to home page after successful login
-      navigate("/");
+      api
+        .post("/api/users/login", { email, password })
+        .then((response) => {
+          const { user, authToken } = response.data;
+          setUserData(user);
+          sessionStorage.setItem("authToken", authToken);
+          navigate("/");
+          console.log("Login successful", response.data);
+        })
+        .catch((error) => {
+          console.error("API Error:", error);
+        });
     } else {
       setErrors(newErrors);
     }
