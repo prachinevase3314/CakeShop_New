@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { api } from "../../api/axios.api";
 import "./ResetPassword.scss";
 
 const ForgotPassword = () => {
@@ -51,16 +52,27 @@ const ForgotPassword = () => {
     if (Object.keys(newErrors).length === 0) {
       // Here you would typically make an API call to update password
       console.log("Password reset successful for:", email);
-      setSubmitted(true);
 
-      // Redirect after 3 seconds
-      setTimeout(() => {
-        setEmail("");
-        setNewPassword("");
-        setConfirmPassword("");
-        setSubmitted(false);
-        navigate("/login");
-      }, 3000);
+      api
+        .post("/api/users/password-reset", {
+          email,
+          newPassword,
+          confirmPassword,
+        })
+        .then(() => {
+          setSubmitted(true);
+          // Redirect after 3 seconds
+          setTimeout(() => {
+            setEmail("");
+            setNewPassword("");
+            setConfirmPassword("");
+            setSubmitted(false);
+            navigate("/login");
+          }, 3000);
+        })
+        .catch((error) => {
+          console.error("Error resetting password:", error);
+        });
     } else {
       setErrors(newErrors);
     }

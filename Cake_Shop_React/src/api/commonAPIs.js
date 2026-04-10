@@ -83,3 +83,24 @@ export const fetchOrders = async () => {
     return resObj;
   }
 };
+
+export const fetchDashboardStats = async () => {
+  let resObj = {
+    data: null,
+    error: null,
+  };
+  try {
+    const res = await api.get("/api/dashboard/stats", {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem("authToken")}`,
+      },
+    });
+    resObj.data = res.data;
+    resObj.error = null;
+  } catch (error) {
+    resObj.data = null;
+    resObj.error = error;
+  } finally {
+    return resObj;
+  }
+};

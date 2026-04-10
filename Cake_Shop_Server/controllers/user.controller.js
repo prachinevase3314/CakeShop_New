@@ -3,6 +3,11 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
 
+const gethashedPassword = async (password) => {
+  const salt = await bcrypt.genSalt(10);
+  return await bcrypt.hash(password, salt);
+};
+
 const registerSchema = Joi.object({
   firstName: Joi.string().min(2).max(50).required(),
   lastName: Joi.string().min(2).max(50).required(),
@@ -41,7 +46,7 @@ exports.registerUser = async (req, res, next) => {
     if (existingUser)
       return res.status(409).json({ error: "Email already in use" });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await gethashedPassword(password);
 
     const user = new User({
       firstName,
@@ -144,6 +149,29 @@ exports.getAllUsers = async (req, res, next) => {
   try {
     const users = await User.find().select("-password");
     res.json({ users });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { email, newPassword, confirmPassword } = req.body;
+
+    const isUserAvailable = await User.findOne({ email });
+    if (!isUserAvailable)
+      return res.status(404).json({ error: "User with this email not found" });
+
+    if (newPassword !== confirmPassword)
+      return res.status(400).json({ error: "Passwords do not match" });
+
+    const hashedPassword = await gethashedPassword(newPassword);
+
+    await User.findByIdAndUpdate(isUserAvailable._id, {
+      password: hashedPassword,
+    });
+
+    res.json({ message: "Password reset successful" });
   } catch (err) {
     next(err);
   }

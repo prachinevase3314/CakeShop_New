@@ -96,7 +96,10 @@ exports.deleteProduct = async (req, res, next) => {
 
 exports.getProducts = async (req, res, next) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const products = await Product.find()
+      .populate("productCategory", "name")
+      .sort({ createdAt: -1 });
+
     res.json(products);
   } catch (err) {
     next(err);

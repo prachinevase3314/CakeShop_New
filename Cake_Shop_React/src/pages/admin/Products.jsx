@@ -46,7 +46,7 @@ const Products = () => {
     setFormData({
       name: product.name,
       description: product.description,
-      productCategory: product.productCategory,
+      productCategory: product.productCategory._id,
       price: product.price,
       stock: product.stock,
     });
@@ -155,7 +155,7 @@ const Products = () => {
             <tr key={product._id}>
               {/* <td>{product._id}</td> */}
               <td>{product.name}</td>
-              <td>{product.productCategory}</td>
+              <td>{product.productCategory?.name}</td>
               <td>₹{product.price}</td>
               <td>{product.stock}</td>
               <td>

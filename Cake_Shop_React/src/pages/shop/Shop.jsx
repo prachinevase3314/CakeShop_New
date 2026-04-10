@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { products as initialProducts } from "../../utils/constants";
+import { imageURL, products as initialProducts } from "../../utils/constants";
 import "./Shop.scss";
 import { fetchProducts } from "../../api/commonAPIs";
 
@@ -12,7 +12,13 @@ const Shop = () => {
   React.useEffect(() => {
     const fetchProductsData = async () => {
       const productResObj = await fetchProducts();
-      setProducts(productResObj.data);
+
+      const newProducts = productResObj?.data?.map((product) => {
+        const category = product.category;
+
+        return { ...product, image: imageURL[category] || imageURL.Cakes };
+      });
+      setProducts(newProducts);
     };
     fetchProductsData();
   }, []);

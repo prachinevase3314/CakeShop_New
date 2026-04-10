@@ -5,6 +5,7 @@ const {
   getProfile,
   updateUser,
   getAllUsers,
+  resetPassword,
 } = require("../controllers/user.controller");
 const authMiddleware = require("../middleware/auth.middleware");
 
@@ -12,6 +13,7 @@ const router = express.Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post("/password-reset", resetPassword);
 router.patch("/:user_Id", authMiddleware, updateUser);
 router.get("/profile", authMiddleware, getProfile);
 router.get("/all", authMiddleware, getAllUsers);

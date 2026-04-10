@@ -7,6 +7,7 @@ const userRoutes = require("./routes/user.route");
 const categoryRoutes = require("./routes/category.route");
 const productRoutes = require("./routes/product.route");
 const orderRoutes = require("./routes/order.route");
+const dashboardRoutes = require("./routes/dashboard.route");
 const errorHandler = require("./middleware/errorHandler");
 
 dotenv.config();
@@ -26,6 +27,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 app.use(errorHandler);
 
 connectDB().then(() => {

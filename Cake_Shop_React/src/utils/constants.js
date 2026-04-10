@@ -1,23 +1,26 @@
+import CakeImage from "../assets/cake1.jpg";
+import CookieImage from "../assets/cookie.avif";
+import CroissantImage from "../assets/croissants.avif";
+import DessertImage from "../assets/dessert.avif";
+import ChocolateCakeImage from "../assets/cake3.jpg";
+import PastriesImage from "../assets/pastries.avif";
+
 export const categories = [
   {
     name: "Cookies",
-    image:
-      "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=300&h=250&fit=crop",
+    image: CookieImage,
   },
   {
     name: "Cakes",
-    image:
-      "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&h=250&fit=crop",
+    image: CakeImage,
   },
   {
     name: "Pastries",
-    image:
-      "https://images.unsplash.com/photo-1623334044303-241021148842?w=300&h=250&fit=crop",
+    image: CroissantImage,
   },
   {
     name: "Desserts",
-    image:
-      "https://images.unsplash.com/photo-1587314168485-3236d6710814?w=300&h=250&fit=crop",
+    image: DessertImage,
   },
 ];
 
@@ -80,14 +83,19 @@ export const userDetails = [
   },
 ];
 
+export const imageURL = {
+  Cakes: "../assets/cake1.jpg",
+  Cookies: "../assets/cookie.avif",
+  Pastries: "../assets/croissants.avif",
+  Desserts: "../assets/dessert.avif",
+};
+
 export const products = [
   {
     id: 1,
     name: "Chocolate Cake",
     category: "Cakes",
     price: 25.0,
-    image:
-      "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&h=300&fit=crop",
     description: "Rich and delicious chocolate cake",
   },
   {
@@ -95,8 +103,6 @@ export const products = [
     name: "Vanilla Cupcakes",
     category: "Cakes",
     price: 15.0,
-    image:
-      "https://images.unsplash.com/photo-1614707267537-b85faf00021e?w=300&h=300&fit=crop",
     description: "Soft vanilla cupcakes with frosting",
   },
   {
@@ -104,8 +110,6 @@ export const products = [
     name: "Chocolate Chip Cookies",
     category: "Cookies",
     price: 12.0,
-    image:
-      "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=300&h=300&fit=crop",
     description: "Classic chocolate chip cookies",
   },
   {
@@ -113,8 +117,6 @@ export const products = [
     name: "Sugar Cookies",
     category: "Cookies",
     price: 10.0,
-    image:
-      "https://images.unsplash.com/photo-1599599810694-b5ac4dd84ffd?w=300&h=300&fit=crop",
     description: "Sweet sugar cookies with toppings",
   },
   {
@@ -122,8 +124,6 @@ export const products = [
     name: "Croissants",
     category: "Pastries",
     price: 8.0,
-    image:
-      "https://images.unsplash.com/photo-1623334044303-241021148842?w=300&h=300&fit=crop",
     description: "Buttery croissants fresh from oven",
   },
   {
@@ -131,8 +131,6 @@ export const products = [
     name: "Danish Pastry",
     category: "Pastries",
     price: 9.0,
-    image:
-      "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=300&h=300&fit=crop",
     description: "Delicate Danish pastry",
   },
   {
@@ -140,8 +138,6 @@ export const products = [
     name: "Brownies",
     category: "Desserts",
     price: 6.0,
-    image:
-      "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=300&h=300&fit=crop",
     description: "Fudgy chocolate brownies",
   },
   {
@@ -149,8 +145,6 @@ export const products = [
     name: "Cheesecake",
     category: "Desserts",
     price: 20.0,
-    image:
-      "https://images.unsplash.com/photo-1587314168485-3236d6710814?w=300&h=300&fit=crop",
     description: "New York style cheesecake",
   },
 ];

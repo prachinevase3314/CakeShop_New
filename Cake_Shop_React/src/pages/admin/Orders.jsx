@@ -78,7 +78,7 @@ const Orders = () => {
             <tr key={order.orderId}>
               <td>{order.orderId}</td>
               <td>{order.customerName}</td>
-              <td>₹{order.amount}</td>
+              <td>₹{order.totalAmount}</td>
               <td>{order.paymentMethod}</td>
               <td>{order.createdAt?.split("T")[0]}</td>
               <td>
@@ -138,6 +138,7 @@ const Orders = () => {
               value={editedOrder?.customerEmail || ""}
               onChange={handleInputChange}
               className="form-input"
+              disabled
             />
           </div>
 
@@ -149,6 +150,7 @@ const Orders = () => {
               value={editedOrder?.customerPhone || ""}
               onChange={handleInputChange}
               className="form-input"
+              disabled
             />
           </div>
 

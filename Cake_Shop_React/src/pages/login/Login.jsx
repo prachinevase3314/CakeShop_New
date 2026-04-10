@@ -6,8 +6,8 @@ import { api } from "../../api/axios.api";
 import { setUserData } from "../../utils/commonUtils";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("prachinevase3314@gmail.com");
+  const [password, setPassword] = useState("Pass@123");
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
