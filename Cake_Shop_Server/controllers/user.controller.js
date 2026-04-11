@@ -128,7 +128,9 @@ exports.updateUser = async (req, res, next) => {
     const updatedUser = await User.findByIdAndUpdate(user_Id, req.body, {
       returnDocument: true,
     }).select("-password");
-    res.json({ user: updatedUser });
+
+    const { _id, ...rest } = updatedUser;
+    res.json({ user: { id: _id, ...rest } });
   } catch (err) {
     next(err);
   }
@@ -139,7 +141,8 @@ exports.getProfile = async (req, res, next) => {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    res.json({ user });
+    const { _id, ...rest } = user;
+    res.json({ user: { id: _id, ...rest } });
   } catch (err) {
     next(err);
   }

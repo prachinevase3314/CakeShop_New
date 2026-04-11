@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { api } from "../../api/axios.api";
+import { setUserData } from "../../utils/commonUtils";
 import "./Register.scss";
 
 const Register = () => {

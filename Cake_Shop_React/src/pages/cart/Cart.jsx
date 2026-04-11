@@ -62,7 +62,7 @@ const Cart = () => {
     }));
 
     const payload = {
-      customerId: getUserData()._id,
+      customerId: getUserData().id,
       products: newCartItems,
       totalAmount: parseFloat(calculateTotal()),
     };
