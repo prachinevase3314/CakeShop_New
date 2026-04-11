@@ -1,62 +1,60 @@
 import React, { useState } from "react";
-import { imageURL, products as initialProducts } from "../../utils/constants";
+import { imageURL } from "../../utils/constants";
 import "./Shop.scss";
-import { fetchProducts } from "../../api/commonAPIs";
+import { fetchProducts, addToCart } from "../../api/commonAPIs";
 
 const CART_KEY = "cartItems";
 
 const Shop = () => {
   const [quantities, setQuantities] = useState({});
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState([]);
 
   React.useEffect(() => {
     const fetchProductsData = async () => {
       const productResObj = await fetchProducts();
-
       const newProducts = productResObj?.data?.map((product) => {
         const category = product.category;
-
         return { ...product, image: imageURL[category] || imageURL.Cakes };
       });
-      setProducts(newProducts);
+      setProducts(newProducts || []);
     };
     fetchProductsData();
   }, []);
 
-  const getCartFromLocalStorage = () => {
-    try {
-      const saved = localStorage.getItem(CART_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch (err) {
-      console.error("Error parsing cart from localStorage", err);
-      return [];
-    }
-  };
-
-  const saveCartToLocalStorage = (cart) => {
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-  };
-
-  const handleAddToCart = (product) => {
+  const handleAddToCart = async (product) => {
     const qty = quantities[product._id] || 1;
-    const currentCart = getCartFromLocalStorage();
 
-    const existingIndex = currentCart.findIndex(
-      (item) => item._id === product._id,
-    );
-    if (existingIndex !== -1) {
-      const updatedCart = [...currentCart];
-      updatedCart[existingIndex] = {
-        ...updatedCart[existingIndex],
-        quantity: updatedCart[existingIndex].quantity + qty,
-      };
-      saveCartToLocalStorage(updatedCart);
-    } else {
-      saveCartToLocalStorage([...currentCart, { ...product, quantity: qty }]);
+    try {
+      const response = await addToCart(product._id, qty, product.price);
+
+      // Always update localStorage for navbar count
+      const currentCart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+      const existingIndex = currentCart.findIndex(
+        (item) => item._id === product._id,
+      );
+
+      if (existingIndex !== -1) {
+        currentCart[existingIndex].quantity += qty;
+      } else {
+        currentCart.push({ ...product, quantity: qty });
+      }
+
+      localStorage.setItem(CART_KEY, JSON.stringify(currentCart));
+
+      if (response.error) {
+        alert(`"${product.name}" added to cart (offline mode)`);
+      } else {
+        alert(`"${product.name}" added to cart`);
+      }
+
+      setQuantities((prev) => ({ ...prev, [product._id]: 1 }));
+
+      // Dispatch custom event to update navbar cart count
+      window.dispatchEvent(new Event("cartUpdated"));
+    } catch (err) {
+      console.error("Error adding to cart:", err);
+      alert(`Failed to add "${product.name}" to cart`);
     }
-
-    setQuantities((prev) => ({ ...prev, [product._id]: 1 }));
-    alert(`${qty}x "${product.name}" added to cart`);
   };
 
   const handleQuantityChange = (productId, value) => {

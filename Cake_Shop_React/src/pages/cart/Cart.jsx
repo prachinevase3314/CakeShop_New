@@ -3,19 +3,43 @@ import { useNavigate } from "react-router-dom";
 import "./Cart.scss";
 import { getUserData } from "../../utils/commonUtils";
 import { api } from "../../api/axios.api";
+import {
+  getCart,
+  updateCartItem,
+  removeFromCart,
+  clearCart,
+} from "../../api/commonAPIs";
 
 const CART_KEY = "cartItems";
 
 const Cart = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [cartItems, setCartItems] = useState([]);
 
-  const getCartFromLocalStorage = () => {
+  React.useEffect(() => {
+    fetchCartFromServer();
+  }, []);
+
+  const fetchCartFromServer = async () => {
     try {
-      const stored = localStorage.getItem(CART_KEY);
-      return stored ? JSON.parse(stored) : [];
+      setLoading(true);
+      const response = await getCart();
+      if (response.error) {
+        // Fallback to localStorage
+        const stored = localStorage.getItem(CART_KEY);
+        setCartItems(stored ? JSON.parse(stored) : []);
+      } else {
+        setCartItems(response.data || []);
+        // Sync localStorage with server data
+        localStorage.setItem(CART_KEY, JSON.stringify(response.data || []));
+      }
     } catch (error) {
-      console.error("Failed to parse cart from localStorage", error);
-      return [];
+      console.error("Failed to fetch cart:", error);
+      const stored = localStorage.getItem(CART_KEY);
+      setCartItems(stored ? JSON.parse(stored) : []);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -23,26 +47,111 @@ const Cart = () => {
     localStorage.setItem(CART_KEY, JSON.stringify(items));
   };
 
-  const [cartItems, setCartItems] = useState(() => getCartFromLocalStorage());
-
-  React.useEffect(() => {
-    saveCartToLocalStorage(cartItems);
-  }, [cartItems]);
-
-  const handleQuantityChange = (id, newQuantity) => {
+  const handleQuantityChange = async (productId, newQuantity) => {
     if (newQuantity < 1) {
-      handleRemoveItem(id);
+      handleRemoveItem(productId);
       return;
     }
-    setCartItems((prev) =>
-      prev.map((item) =>
-        item._id === id ? { ...item, quantity: newQuantity } : item,
-      ),
-    );
+
+    try {
+      const response = await updateCartItem(productId, newQuantity);
+      if (!response.error) {
+        // Update state after successful server update
+        setCartItems((prev) =>
+          prev.map((item) =>
+            item.productId._id === productId
+              ? { ...item, quantity: newQuantity }
+              : item,
+          ),
+        );
+        // Sync localStorage
+        const updated = cartItems.map((item) =>
+          item.productId._id === productId
+            ? { ...item, quantity: newQuantity }
+            : item,
+        );
+        saveCartToLocalStorage(updated);
+      } else {
+        // Fallback to localStorage update
+        const updated = cartItems.map((item) =>
+          item.productId._id === productId || item._id === productId
+            ? { ...item, quantity: newQuantity }
+            : item,
+        );
+        setCartItems(updated);
+        saveCartToLocalStorage(updated);
+      }
+    } catch (error) {
+      console.error("Failed to update quantity:", error);
+      // Fallback: update locally
+      const updated = cartItems.map((item) =>
+        item.productId._id === productId || item._id === productId
+          ? { ...item, quantity: newQuantity }
+          : item,
+      );
+      setCartItems(updated);
+      saveCartToLocalStorage(updated);
+    }
+
+    // Dispatch custom event to update navbar cart count
+    window.dispatchEvent(new Event("cartUpdated"));
   };
 
-  const handleRemoveItem = (id) => {
-    setCartItems((prev) => prev.filter((item) => item._id !== id));
+  const handleRemoveItem = async (productId) => {
+    try {
+      const response = await removeFromCart(productId);
+      if (!response.error) {
+        // Update state after successful server removal
+        setCartItems((prev) =>
+          prev.filter((item) => item.productId._id !== productId),
+        );
+        // Sync localStorage
+        const updated = cartItems.filter(
+          (item) => item.productId._id !== productId,
+        );
+        saveCartToLocalStorage(updated);
+      } else {
+        // Fallback to localStorage removal
+        const updated = cartItems.filter(
+          (item) => item.productId._id !== productId && item._id !== productId,
+        );
+        setCartItems(updated);
+        saveCartToLocalStorage(updated);
+      }
+    } catch (error) {
+      console.error("Failed to remove item:", error);
+      // Fallback: remove locally
+      const updated = cartItems.filter(
+        (item) => item.productId._id !== productId && item._id !== productId,
+      );
+      setCartItems(updated);
+      saveCartToLocalStorage(updated);
+    }
+
+    // Dispatch custom event to update navbar cart count
+    window.dispatchEvent(new Event("cartUpdated"));
+  };
+
+  const handleClearCart = async () => {
+    if (!window.confirm("Are you sure you want to clear your cart?")) return;
+
+    try {
+      const response = await clearCart();
+      if (!response.error) {
+        setCartItems([]);
+        localStorage.removeItem(CART_KEY);
+      } else {
+        setCartItems([]);
+        localStorage.removeItem(CART_KEY);
+      }
+    } catch (error) {
+      console.error("Failed to clear cart:", error);
+      setCartItems([]);
+      localStorage.removeItem(CART_KEY);
+    }
+
+    // Dispatch custom event to update navbar cart count
+    window.dispatchEvent(new Event("cartUpdated"));
   };
 
   const calculateSubtotal = (price, quantity) => {
@@ -57,7 +166,7 @@ const Cart = () => {
 
   const handleOrderNowClick = () => {
     const newCartItems = cartItems.map((item) => ({
-      productId: item._id,
+      productId: item.productId._id || item._id,
       quantity: item.quantity,
     }));
 
@@ -78,6 +187,9 @@ const Cart = () => {
         console.log("Order placed successfully:", response.data);
         alert("Your order has been placed successfully!");
         setCartItems([]);
+        localStorage.removeItem(CART_KEY);
+        // Dispatch custom event to update navbar cart count
+        window.dispatchEvent(new Event("cartUpdated"));
       })
       .catch((error) => {
         console.error("Failed to place order:", error);
@@ -86,6 +198,8 @@ const Cart = () => {
 
     console.log("Order placed:", payload);
   };
+
+  if (loading) return <div className="cart-page">Loading...</div>;
 
   return (
     <div className="cart-page">
@@ -114,15 +228,15 @@ const Cart = () => {
               </div>
 
               {cartItems.map((item) => (
-                <div key={item._id} className="cart-item">
+                <div key={item.productId._id || item._id} className="cart-item">
                   <div className="col-product">
                     <img
-                      src={item.image}
-                      alt={item.name}
+                      src={item.image || item.productId.image}
+                      alt={item.name || item.productId.name}
                       className="item-image"
                     />
                     <div className="item-details">
-                      <h3>{item.name}</h3>
+                      <h3>{item.name || item.productId.name}</h3>
                     </div>
                   </div>
 
@@ -135,7 +249,10 @@ const Cart = () => {
                       <button
                         className="qty-btn"
                         onClick={() =>
-                          handleQuantityChange(item._id, item.quantity - 1)
+                          handleQuantityChange(
+                            item.productId._id || item._id,
+                            item.quantity - 1,
+                          )
                         }
                       >
                         −
@@ -146,7 +263,7 @@ const Cart = () => {
                         value={item.quantity}
                         onChange={(e) =>
                           handleQuantityChange(
-                            item._id,
+                            item.productId._id || item._id,
                             parseInt(e.target.value) || 1,
                           )
                         }
@@ -155,7 +272,10 @@ const Cart = () => {
                       <button
                         className="qty-btn"
                         onClick={() =>
-                          handleQuantityChange(item._id, item.quantity + 1)
+                          handleQuantityChange(
+                            item.productId._id || item._id,
+                            item.quantity + 1,
+                          )
                         }
                       >
                         +
@@ -170,7 +290,9 @@ const Cart = () => {
                   <div className="col-action">
                     <button
                       className="remove-btn"
-                      onClick={() => handleRemoveItem(item._id)}
+                      onClick={() =>
+                        handleRemoveItem(item.productId._id || item._id)
+                      }
                     >
                       Remove
                     </button>
@@ -211,9 +333,9 @@ const Cart = () => {
 
                 <button
                   className="continue-shopping-btn"
-                  onClick={() => navigate("/shop")}
+                  onClick={() => handleClearCart()}
                 >
-                  Continue Shopping
+                  Clear Cart
                 </button>
               </div>
             </div>

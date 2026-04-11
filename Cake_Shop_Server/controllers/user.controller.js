@@ -55,6 +55,7 @@ exports.registerUser = async (req, res, next) => {
       password: hashedPassword,
       phone,
       address,
+      cart: [],
     });
 
     const saved = await user.save();
@@ -76,6 +77,7 @@ exports.registerUser = async (req, res, next) => {
         phone: saved.phone,
         address: saved.address,
         role: saved.role,
+        cart: saved.cart,
       },
       authToken,
     });
@@ -111,6 +113,7 @@ exports.loginUser = async (req, res, next) => {
         phone: user.phone,
         address: user.address,
         role: user.role,
+        cart: user.cart,
       },
       authToken,
     });
@@ -138,7 +141,9 @@ exports.updateUser = async (req, res, next) => {
 
 exports.getProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user.id)
+      .select("-password")
+      .populate("cart.productId");
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const { _id, ...rest } = user;
@@ -175,6 +180,105 @@ exports.resetPassword = async (req, res, next) => {
     });
 
     res.json({ message: "Password reset successful" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Cart Functions
+exports.addToCart = async (req, res, next) => {
+  try {
+    const { productId, quantity, price } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const cartItem = user.cart.find(
+      (item) => item.productId.toString() === productId,
+    );
+
+    if (cartItem) {
+      cartItem.quantity += quantity;
+    } else {
+      user.cart.push({ productId, quantity, price });
+    }
+
+    await user.save();
+    res.status(201).json({ message: "Item added to cart", cart: user.cart });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.removeFromCart = async (req, res, next) => {
+  try {
+    const { productId } = req.params;
+    const user = await User.findById(req.user.id);
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.cart = user.cart.filter(
+      (item) => item.productId.toString() !== productId,
+    );
+    await user.save();
+
+    res.json({ message: "Item removed from cart", cart: user.cart });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getCart = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).populate("cart.productId");
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    res.json({ cart: user.cart });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.updateCartItem = async (req, res, next) => {
+  try {
+    const { productId, quantity } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const cartItem = user.cart.find(
+      (item) => item.productId.toString() === productId,
+    );
+
+    console.log(cartItem, user.cart, productId);
+    if (!cartItem) return res.status(404).json({ error: "Item not in cart" });
+
+    if (quantity <= 0) {
+      user.cart = user.cart.filter(
+        (item) => item.productId.toString() !== productId,
+      );
+    } else {
+      cartItem.quantity = quantity;
+    }
+
+    await user.save();
+    res.json({ message: "Cart updated", cart: user.cart });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.clearCart = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.cart = [];
+    await user.save();
+
+    res.json({ message: "Cart cleared successfully" });
   } catch (err) {
     next(err);
   }
