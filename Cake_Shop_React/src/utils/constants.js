@@ -2,8 +2,6 @@ import CakeImage from "../assets/cake1.jpg";
 import CookieImage from "../assets/cookie.avif";
 import CroissantImage from "../assets/croissants.avif";
 import DessertImage from "../assets/dessert.avif";
-import ChocolateCakeImage from "../assets/cake3.jpg";
-import PastriesImage from "../assets/pastries.avif";
 
 export const categories = [
   {
@@ -82,13 +80,6 @@ export const userDetails = [
     address: "789 Pine Rd, City, State 12345",
   },
 ];
-
-export const imageURL = {
-  Cakes: "../assets/cake1.jpg",
-  Cookies: "../assets/cookie.avif",
-  Pastries: "../assets/croissants.avif",
-  Desserts: "../assets/dessert.avif",
-};
 
 export const products = [
   {

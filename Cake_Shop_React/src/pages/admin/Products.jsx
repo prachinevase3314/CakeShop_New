@@ -10,6 +10,7 @@ const initialFormData = {
   description: "",
   price: "",
   stock: "",
+  imageFile: null,
 };
 
 const Products = () => {
@@ -54,7 +55,15 @@ const Products = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, files } = e.target;
+    if (name === "image") {
+      setFormData((prev) => ({
+        ...prev,
+        imageFile: files?.[0] || null,
+      }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -63,36 +72,44 @@ const Products = () => {
 
   const handleSaveProduct = async () => {
     try {
+      const productPayload = new FormData();
+      productPayload.append("name", formData.name);
+      productPayload.append("description", formData.description);
+      productPayload.append("productCategory", formData.productCategory);
+      productPayload.append("price", formData.price);
+      productPayload.append("stock", formData.stock);
+      if (formData.imageFile) {
+        productPayload.append("image", formData.imageFile);
+      }
+
       if (selectedProduct) {
         // Update existing product
         const response = await api.put(
           `/api/products/${selectedProduct._id}`,
-          formData,
+          productPayload,
           {
             headers: {
-              "Content-Type": "application/json",
               Authorization: `Bearer ${sessionStorage.getItem("authToken")}`,
+              "Content-Type": undefined,
             },
           },
         );
         console.log("Product updated successfully:", response.data);
-        // Update the product in the list
         setProducts((prev) =>
           prev.map((prod) =>
-            prod._id === selectedProduct._id ? { ...prod, ...formData } : prod,
+            prod._id === selectedProduct._id ? response.data.product : prod,
           ),
         );
       } else {
         // Add new product
-        const response = await api.post("/api/products", formData, {
+        const response = await api.post("/api/products", productPayload, {
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${sessionStorage.getItem("authToken")}`,
+            "Content-Type": undefined,
           },
         });
         console.log("Product added successfully:", response.data);
-        // Add the new product to the list
-        setProducts((prev) => [...prev, response.data]);
+        setProducts((prev) => [...prev, response.data.product]);
       }
     } catch (error) {
       console.error("Error saving product:", error);
@@ -143,6 +160,7 @@ const Products = () => {
         <thead>
           <tr>
             {/* <th>ID</th> */}
+            <th>Image</th>
             <th>Product Name</th>
             <th>Product Category</th>
             <th>Price</th>
@@ -153,7 +171,17 @@ const Products = () => {
         <tbody>
           {products.map((product) => (
             <tr key={product._id}>
-              {/* <td>{product._id}</td> */}
+              <td>
+                {product.image ? (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    style={{ width: 60, height: 60, objectFit: "cover" }}
+                  />
+                ) : (
+                  "-"
+                )}
+              </td>
               <td>{product.name}</td>
               <td>{product.productCategory?.name}</td>
               <td>₹{product.price}</td>
@@ -250,6 +278,30 @@ const Products = () => {
               className="form-input"
               placeholder="Enter stock quantity"
             />
+          </div>
+
+          <div className="form-group">
+            <label>Product Image</label>
+            <input
+              type="file"
+              name="image"
+              accept="image/*"
+              onChange={handleInputChange}
+              className="form-input"
+            />
+            {formData.imageFile && (
+              <p className="image-name">Selected: {formData.imageFile.name}</p>
+            )}
+            {selectedProduct?.image && !formData.imageFile && (
+              <div className="image-preview">
+                <p>Current image:</p>
+                <img
+                  src={selectedProduct.image}
+                  alt="Current product"
+                  style={{ width: 120, height: 120, objectFit: "cover" }}
+                />
+              </div>
+            )}
           </div>
         </form>
       </Modal>

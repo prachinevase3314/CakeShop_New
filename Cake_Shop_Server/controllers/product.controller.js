@@ -29,6 +29,10 @@ exports.createProduct = async (req, res, next) => {
     if (existingProduct)
       return res.status(409).json({ error: "Product already exists" });
 
+    const imageUrl = req.file
+      ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
+      : undefined;
+
     const product = new Product({
       name,
       slug: slugify(name, { lower: true }),
@@ -36,12 +40,14 @@ exports.createProduct = async (req, res, next) => {
       productCategory,
       price,
       stock,
+      image: imageUrl,
     });
 
     const saved = await product.save();
 
     res.status(201).json({
       message: "Product created successfully",
+      product: saved,
     });
   } catch (err) {
     next(err);
@@ -60,18 +66,22 @@ exports.updateProduct = async (req, res, next) => {
 
     const { name, description, price, stock, productCategory } = value;
 
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      {
-        name,
-        productCategory,
-        slug: slugify(name, { lower: true }),
-        description,
-        price,
-        stock,
-      },
-      { returnDocument: true },
-    );
+    const updateData = {
+      name,
+      productCategory,
+      slug: slugify(name, { lower: true }),
+      description,
+      price,
+      stock,
+    };
+
+    if (req.file) {
+      updateData.image = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    }
+
+    const product = await Product.findByIdAndUpdate(req.params.id, updateData, {
+      returnDocument: true,
+    });
 
     if (!product) return res.status(404).json({ error: "Product not found" });
 
