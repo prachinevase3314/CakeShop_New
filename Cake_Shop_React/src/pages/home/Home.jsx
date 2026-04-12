@@ -158,7 +158,12 @@ const Home = () => {
               of real butter so screum simply delicious insiders the old
               fashioned way.
             </p>
-            <button className="read-more-btn">Read More</button>
+            <button
+              className="read-more-btn"
+              onClick={() => navigate("/about")}
+            >
+              Read More
+            </button>
           </div>
           <div className="who-we-are-image">
             <img
